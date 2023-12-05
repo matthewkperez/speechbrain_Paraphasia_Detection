@@ -1,4 +1,0 @@
-Target: /z/mkperez/speechbrain/AphasiaBank/results/duc_process/PT-FT_fluency/FT-Fluent/No-LM_wav2vec2/freeze-False/wer.txt
-Baseline: /z/mkperez/speechbrain/AphasiaBank/results/duc_process/No-LM/wav2vec2-large-960h-lv60-self/freeze-False/wer.txt
-Target WER: 0.3698964945950823 | Base WER: 0.34945786788707905
-Target CER: 0.20769124128068178 | Base CER: 0.19557540203718296
