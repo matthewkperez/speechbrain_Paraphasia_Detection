@@ -1,0 +1,2 @@
+# speechbrain_Paraphasia_Detection
+Paraphasia Detection using Speechbrain toolkit
