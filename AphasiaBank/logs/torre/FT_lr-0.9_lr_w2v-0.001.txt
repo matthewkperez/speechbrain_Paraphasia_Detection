@@ -1,0 +1,41 @@
+torchvision is not available - cannot save figures
+Some weights of the model checkpoint at facebook/wav2vec2-large-960h-lv60-self were not used when initializing Wav2Vec2Model: ['lm_head.weight', 'lm_head.bias']
+- This IS expected if you are initializing Wav2Vec2Model from the checkpoint of a model trained on another task or with another architecture (e.g. initializing a BertForSequenceClassification model from a BertForPreTraining model).
+- This IS NOT expected if you are initializing Wav2Vec2Model from the checkpoint of a model that you expect to be exactly identical (initializing a BertForSequenceClassification model from a BertForSequenceClassification model).
+Some weights of Wav2Vec2Model were not initialized from the model checkpoint at facebook/wav2vec2-large-960h-lv60-self and are newly initialized: ['wav2vec2.masked_spec_embed']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+speechbrain.core - Beginning experiment!
+speechbrain.core - Experiment folder: results/torre/freeze-False/wav2vec2-large-960h-lv60-self-2000/lr-0.9_lr_w2v-0.001
+speechbrain.dataio.encoder - Load called, but CTCTextEncoder is not empty. Loaded data will overwrite everything. This is normal if there is e.g. an unk label defined at init.
+train: 75072 -> 71148 | val: 3952 -> 3745 | test: 19756 -> 18705
+speechbrain.core - Info: auto_mix_prec arg from hparam file is used
+speechbrain.core - Info: ckpt_interval_minutes arg from hparam file is used
+speechbrain.core - Info: grad_accumulation_factor arg from hparam file is used
+speechbrain.core - 27.3M trainable parameters in ASR
+tokenizer: {'a': 27, 'n': 1, 'd': 2, ' ': 3, 'i': 4, 'm': 5, 't': 6, 'h': 7, 'k': 8, 'g': 9, 'w': 10, 'o': 11, 'e': 12, 'r': 13, 'f': 14, 'u': 15, 'l': 16, 's': 17, 'y': 18, 'j': 19, 'p': 20, 'b': 21, 'c': 22, 'v': 23, 'x': 24, 'z': 25, 'q': 26, '<blank>': 0}
+tokenizer: 28
+speechbrain.utils.checkpoints - Loading a checkpoint from results/torre/freeze-False/wav2vec2-large-960h-lv60-self-2000/lr-0.9_lr_w2v-0.001/save/CKPT+2022-11-29+20-27-22+00
+selective_training_torre.py:436: UserWarning: Anomaly Detection has been enabled. This mode will increase the runtime and should only be enabled for debugging.
+  with torch.autograd.detect_anomaly():
+speechbrain.core - Exception:
+Traceback (most recent call last):
+  File "/data/mkperez/speechbrain/speechbrain/utils/checkpoints.py", line 972, in _call_load_hooks
+    loadpath = checkpoint.paramfiles[name]
+KeyError: 'scaler'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "selective_training_torre.py", line 437, in <module>
+    asr_brain.fit(
+  File "/data/mkperez/speechbrain/speechbrain/core.py", line 1144, in fit
+    self.on_fit_start()
+  File "/data/mkperez/speechbrain/speechbrain/core.py", line 799, in on_fit_start
+    self.checkpointer.recover_if_possible(
+  File "/data/mkperez/speechbrain/speechbrain/utils/checkpoints.py", line 847, in recover_if_possible
+    self.load_checkpoint(chosen_ckpt, device)
+  File "/data/mkperez/speechbrain/speechbrain/utils/checkpoints.py", line 860, in load_checkpoint
+    self._call_load_hooks(checkpoint, device)
+  File "/data/mkperez/speechbrain/speechbrain/utils/checkpoints.py", line 984, in _call_load_hooks
+    raise RuntimeError(MSG)
+RuntimeError: Loading checkpoint from results/torre/freeze-False/wav2vec2-large-960h-lv60-self-2000/lr-0.9_lr_w2v-0.001/save/CKPT+2022-11-29+20-27-22+00,                             but missing a load path for scaler

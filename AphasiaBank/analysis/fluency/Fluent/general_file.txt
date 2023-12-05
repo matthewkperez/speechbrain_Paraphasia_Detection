@@ -1,0 +1,1 @@
+file: /z/mkperez/speechbrain/AphasiaBank/results/duc_process/No-LM/wav2vec2-large-960h-lv60-self/freeze-False/wer.txt

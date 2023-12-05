@@ -1,0 +1,287 @@
+# ################################
+# Model: wav2vec2 + DNN + CTC
+# Augmentation: SpecAugment
+# Taken from Librispeech recipe
+# ################################
+
+# Seed needs to be set at top of yaml, before objects with parameters are made
+seed: 2000
+lr: 0.9
+lr_wav2vec: 0.001
+number_of_epochs: 30
+# w2v_model: wav2vec2-large-xlsr-53
+w2v_model: wav2vec2-large-960h-lv60-self
+freeze_wav2vec: False
+freeze_feature_extractor_wav2vec: True # procs when freeze_wav2vec = False, only retrain transformers
+__set_seed: !apply:torch.manual_seed [!ref <seed>]
+output_folder: !ref results/duc_process/LM/<w2v_model>/freeze-<freeze_wav2vec>
+wer_file: !ref <output_folder>/wer.txt
+save_folder: !ref <output_folder>/save
+train_log: !ref <output_folder>/train_log.txt
+data_dir: /z/mkperez/speechbrain/AphasiaBank/data/Duc_process
+data_folder: !ref <data_dir>
+mtl_flag: False
+
+# URL for the biggest Fairseq english wav2vec2 model.
+wav2vec2_hub: !ref facebook/<w2v_model>
+
+# Language model (LM) pretraining
+# NB: To avoid mismatch, the speech recognizer must be trained with the same
+# tokenizer used for LM training. Here, we download everything from the
+# speechbrain HuggingFace repository. However, a local path pointing to a
+# directory containing the lm.ckpt and tokenizer.ckpt may also be specified
+# instead. E.g if you want to use your own LM / tokenizer.
+# pretrained_path: speechbrain/asr-crdnn-rnnlm-librispeech
+
+# Data files
+train_splits: ["train"]
+dev_splits: ["dev"]
+test_splits: ["test"]
+skip_prep: False
+ckpt_interval_minutes: 25 # save checkpoint every N min
+train_csv: !ref <data_dir>/train.csv
+valid_csv: !ref <data_dir>/dev.csv
+test_csv: !ref <data_dir>/test.csv
+
+# Training parameters
+sorting: ascending
+auto_mix_prec: False
+sample_rate: 16000
+max_length: 10 # change to 20
+min_length: 0.5
+max_sev_train: 4
+min_sev_train: -1
+batch_size: 3 # start with 16, change to 2
+test_batch_size: 2
+grad_accumulation_factor: 16
+
+# Dataloader options
+train_dataloader_opts:
+   batch_size: !ref <batch_size>
+
+valid_dataloader_opts:
+   batch_size: !ref <batch_size>
+
+test_dataloader_opts:
+   batch_size: !ref <test_batch_size>
+
+# Model parameters
+activation: !name:torch.nn.LeakyReLU
+dnn_layers: 2
+dnn_neurons: 1024
+
+# Output defined by LM model structure
+output_neurons: 1000  # BPE size, index(blank/eos/bos) = 0
+# BPE parameters
+token_type: unigram  # ["unigram", "bpe", "char"]
+character_coverage: 1.0
+
+
+# Decoding parameters
+blank_index: 0
+bos_index: 1
+eos_index: 2
+min_decode_ratio: 0.0
+max_decode_ratio: 1.0
+valid_beam_size: 8
+test_beam_size: 80
+eos_threshold: 1.5
+using_max_attn_shift: True
+max_attn_shift: 140
+ctc_weight_decode: 0.0
+coverage_penalty: 1.5
+temperature: 1.50
+
+
+
+
+
+
+
+#
+# Functions and classes
+#
+epoch_counter: !new:speechbrain.utils.epoch_loop.EpochCounter
+   limit: !ref <number_of_epochs>
+
+augmentation: !new:speechbrain.lobes.augment.TimeDomainSpecAugment
+   sample_rate: !ref <sample_rate>
+   speeds: [80, 90, 95, 100, 105, 110, 120]
+
+enc: !new:speechbrain.lobes.models.VanillaNN.VanillaNN
+   input_shape: [null, null, 1024]
+   activation: !ref <activation>
+   dnn_blocks: !ref <dnn_layers>
+   dnn_neurons: !ref <dnn_neurons>
+
+wav2vec2: !new:speechbrain.lobes.models.huggingface_wav2vec.HuggingFaceWav2Vec2
+   source: !ref <wav2vec2_hub>
+   output_norm: True
+   freeze: !ref <freeze_wav2vec>
+   freeze_feature_extractor: !ref <freeze_feature_extractor_wav2vec>
+   save_path: !ref <save_folder>/wav2vec2_checkpoint
+
+
+# emb: !new:speechbrain.nnet.embedding.Embedding
+#     num_embeddings: !ref <output_neurons>
+#     embedding_dim: !ref <emb_size>
+
+# dec: !new:speechbrain.nnet.RNN.AttentionalRNNDecoder
+#     enc_dim: !ref <dnn_neurons>
+#     input_size: !ref <emb_size>
+#     rnn_type: gru
+#     attn_type: location
+#     hidden_size: !ref <dec_neurons>
+#     attn_dim: 1024
+#     num_layers: 1
+#     scaling: 1.0
+#     channels: 10
+#     kernel_size: 100
+#     re_init: True
+#     dropout: 0.15
+
+# lm_model: !new:speechbrain.lobes.models.RNNLM.RNNLM
+#     output_neurons: !ref <output_neurons>
+#     embedding_dim: !ref <emb_size>
+#     activation: !name:torch.nn.LeakyReLU
+#     dropout: 0.0
+#     rnn_layers: 2
+#     rnn_neurons: 2048
+#     dnn_blocks: 1
+#     dnn_neurons: 512
+   #  return_hidden: True
+
+tokenizer: !new:sentencepiece.SentencePieceProcessor
+
+
+
+ctc_lin: !new:speechbrain.nnet.linear.Linear
+   input_size: !ref <dnn_neurons>
+   n_neurons: !ref <output_neurons>
+
+seq_lin: !new:speechbrain.nnet.linear.Linear
+    input_size: !ref <dec_neurons>
+    n_neurons: !ref <output_neurons>
+
+log_softmax: !new:speechbrain.nnet.activations.Softmax
+   apply_log: True
+
+ctc_cost: !name:speechbrain.nnet.losses.ctc_loss
+   blank_index: !ref <blank_index>
+
+seq_cost: !name:speechbrain.nnet.losses.nll_loss
+    label_smoothing: 0.1
+
+modules:
+   wav2vec2: !ref <wav2vec2>
+   enc: !ref <enc>
+   # emb: !ref <emb>
+   # dec: !ref <dec>
+   ctc_lin: !ref <ctc_lin>
+   # seq_lin: !ref <seq_lin>
+
+model: !new:torch.nn.ModuleList
+   - [!ref <enc>, !ref <emb>, !ref <dec>, !ref <ctc_lin>, !ref <seq_lin>]
+
+model_noemb: !new:torch.nn.ModuleList
+    - [!ref <enc>,!ref <dec>, !ref <ctc_lin>, !ref <seq_lin>]
+
+model_opt_class: !name:torch.optim.Adadelta
+   lr: !ref <lr>
+   rho: 0.95
+   eps: 1.e-8
+
+wav2vec_opt_class: !name:torch.optim.Adam
+   lr: !ref <lr_wav2vec>
+
+lr_annealing_model: !new:speechbrain.nnet.schedulers.NewBobScheduler
+   initial_value: !ref <lr>
+   improvement_threshold: 0.0025
+   annealing_factor: 0.8
+   patient: 1
+
+lr_annealing_wav2vec: !new:speechbrain.nnet.schedulers.NewBobScheduler
+   initial_value: !ref <lr_wav2vec>
+   improvement_threshold: 0.0025
+   annealing_factor: 0.9
+   patient: 1
+
+
+# It makes sense to have a lighter search during validation. In this case,
+# we don't use the LM and CTC probabilities during decoding.
+valid_search: !new:speechbrain.decoders.S2SRNNBeamSearcher
+    embedding: !ref <emb>
+    decoder: !ref <dec>
+    linear: !ref <seq_lin>
+    ctc_linear: !ref <ctc_lin>
+    bos_index: !ref <bos_index>
+    eos_index: !ref <eos_index>
+    blank_index: !ref <blank_index>
+    min_decode_ratio: !ref <min_decode_ratio>
+    max_decode_ratio: !ref <max_decode_ratio>
+    beam_size: !ref <valid_beam_size>
+    eos_threshold: !ref <eos_threshold>
+    using_max_attn_shift: !ref <using_max_attn_shift>
+    max_attn_shift: !ref <max_attn_shift>
+    coverage_penalty: !ref <coverage_penalty>
+    temperature: !ref <temperature>
+
+# The final decoding on the test set can be more computationally demanding.
+# In this case, we use the LM + CTC probabilities during decoding as well.
+# Please, remove this part if you need a faster decoder.
+test_search: !new:speechbrain.decoders.S2SRNNBeamSearchLM
+    embedding: !ref <emb>
+    decoder: !ref <dec>
+    linear: !ref <seq_lin>
+    ctc_linear: !ref <ctc_lin>
+    language_model: !ref <lm_model>
+    bos_index: !ref <bos_index>
+    eos_index: !ref <eos_index>
+    blank_index: !ref <blank_index>
+    min_decode_ratio: !ref <min_decode_ratio>
+    max_decode_ratio: !ref <max_decode_ratio>
+    beam_size: !ref <test_beam_size>
+    eos_threshold: !ref <eos_threshold>
+    using_max_attn_shift: !ref <using_max_attn_shift>
+    max_attn_shift: !ref <max_attn_shift>
+    coverage_penalty: !ref <coverage_penalty>
+    lm_weight: !ref <lm_weight>
+    ctc_weight: !ref <ctc_weight_decode>
+    temperature: !ref <temperature>
+    temperature_lm: !ref <temperature_lm>
+
+
+
+checkpointer: !new:speechbrain.utils.checkpoints.Checkpointer
+   checkpoints_dir: !ref <save_folder>
+   recoverables:
+      wav2vec2: !ref <wav2vec2>
+      model: !ref <model>
+      scheduler_model: !ref <lr_annealing_model>
+      scheduler_wav2vec: !ref <lr_annealing_wav2vec>
+      counter: !ref <epoch_counter>
+
+train_logger: !new:speechbrain.utils.train_logger.FileTrainLogger
+   save_file: !ref <train_log>
+
+error_rate_computer: !name:speechbrain.utils.metric_stats.ErrorRateStats
+
+cer_computer: !name:speechbrain.utils.metric_stats.ErrorRateStats
+   split_tokens: True
+
+
+
+# # This object is used to pretrain the language model and the tokenizers
+# # (defined above). In this case, we also pretrain the ASR model (to make
+# # sure the model converges on a small amount of data)
+# pretrained_path: pretrained_model
+# pretrainer: !new:speechbrain.utils.parameter_transfer.Pretrainer
+#     collect_in: !ref <save_folder>
+#     loadables:
+#         lm: !ref <lm_model>
+#         tokenizer: !ref <tokenizer>
+#         model: !ref <model>
+#     paths:
+#         lm: !ref <pretrained_path>/lm.ckpt
+#         tokenizer: !ref <pretrained_path>/tokenizer.ckpt
+#         model: !ref <pretrained_path>/asr.ckpt

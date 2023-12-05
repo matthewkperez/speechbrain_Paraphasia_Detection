@@ -1,0 +1,3 @@
+/y/mkperez/speechbrain/AphasiaBank/results/duc_process_ES/No-LM/hubert-large-ls960-ft/freeze-True
+consonant_acc: 0.935
+consonant_uar: 0.919
