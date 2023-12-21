@@ -468,13 +468,9 @@ if __name__ == "__main__":
             print(f"free port: {port}")
             cmd = ['torchrun', '--nproc_per_node=1',
                    f'--master_port={str(port)}', 
-                'Fridriksson_AWER.py', f'{yaml_target}',
+                'SB_run_experiment.py', f'{yaml_target}',
                 '--distributed_launch', '--distributed_backend=nccl', '--find_unused_parameters']
             
-            # # single gpu
-            # env = os.environ.copy()
-            # env['CUDA_VISIBLE_DEVICES'] = '0'
-            # cmd = ['python', 'Fridriksson_AWER.py', f'{yaml_target}']
             p = subprocess.run(cmd, env=env)
 
             # p = subprocess.run(cmd)
