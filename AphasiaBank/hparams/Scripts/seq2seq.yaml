@@ -1,19 +1,17 @@
 # ################################
 # Paraphasia Decoding
 # Encoder: Pretrained SSL Encoder
-# Decoder: Transformer Decoder + (CTC/ATT joint) beamsearch + TransformerLM
+# Decoder: Transformer Decoder + (CTC/ATT joint) beamsearch
 # Augmentation: SpecAugment
-# Taken from Librispeech recipe
 # ################################
 
 # Seed needs to be set at top of yaml, before objects with parameters are made
 seed: 2000
 
 # reset LR
-FT_start: True
+FT_start: False
 train_flag: True
 
-frid_fold: 1
 para_type: pn
 token_type: "unigram" # unigram / bpe
 output_neurons: 500
