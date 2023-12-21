@@ -11,7 +11,7 @@ This repo is built with the **[SpeechBrain Toolkit](https://github.com/speechbra
 
 # Instructions
 To train/evaluate seq2seq paraphasia detection model:
-1. Edit AphasiaBank/hparams/Scripts/seq2seq.yml
+1. Edit the yaml config file `AphasiaBank/hparams/Scripts/seq2seq.yml`
 2. Run using `python SB_run_experiment.py AphasiaBank/hparams/Scripts/seq2seq.yml`
 
 
