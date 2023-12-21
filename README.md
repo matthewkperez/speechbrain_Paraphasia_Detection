@@ -5,8 +5,14 @@ We present a novel E2E approach for automatic paraphasia detection. The model us
 
 
 
-# Pre-requisites
+# Setup
 This repo is built with the **[SpeechBrain Toolkit](https://github.com/speechbrain/speechbrain)** , please refer to their repo for download and installation first.
+
+
+# Instructions
+To train/evaluate seq2seq paraphasia detection model:
+1. Edit AphasiaBank/hparams/Scripts/seq2seq.yml
+2. Run using `python SB_run_experiment.py AphasiaBank/hparams/Scripts/seq2seq.yml`
 
 
 # UNDER CONSTRUCTION
