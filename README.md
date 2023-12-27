@@ -3,7 +3,7 @@ We present a novel E2E approach for automatic paraphasia detection. The model us
 
 ![](media/model_arch.png)
 
-# Results
+# Example Output
 Some examples from the proposed model. Model outputs both recognized speech and a binary class label indicating either a paraphasia (1) or not (0).
 
 ![](media/examples.png)
