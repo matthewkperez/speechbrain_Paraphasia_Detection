@@ -3,7 +3,10 @@ We present a novel E2E approach for automatic paraphasia detection. The model us
 
 ![](media/model_arch.png)
 
+# Results
+Some examples from the proposed model. Model outputs both recognized speech and a binary class label indicating either a paraphasia (1) or not (0).
 
+![](media/examples.png)
 
 # Setup
 This repo is built with the **[SpeechBrain Toolkit](https://github.com/speechbrain/speechbrain)** , please refer to their repo for download and installation first.
